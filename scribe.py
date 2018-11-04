@@ -90,13 +90,11 @@ def getSymbols_(someSymbols=None):
                                      cell[4] + ','+\
                                      cell[5] + ');'
 
-                             #sqlStatement(statement)
-                             print(statement)
+                             sqlStatement(statement)
  
                     except:
                         print("Error with this symbol: "+symbol[0])
                         continue
-                    print("Kill Now")
     numpy.save('ERRORS', errors)
 
 getSymbols_()
