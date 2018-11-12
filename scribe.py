@@ -89,21 +89,19 @@ def getSymbols(someSymbols=None):
 
     for symbol in symbols: 
        
-        #attempt to fetch the stock's information for the day--if not able to reach the API, try again, if daily limit reached, wait 24 hours
+       #attempt to fetch the stock's information for the day--if not able to reach the API, try again, if daily limit reached, wait 24 hours
       
        csvfileRaw = ts.get_daily(symbol,outputsize = 'full')
+        
        
-       if (list(list(csvfileRaw)[0])[0]) not ['{']:
-           old_symbol = symbol
-       
-       if (list(list(csvfileRaw)[0])[0]) == ['{']:
+       if list(list(csvfileRaw)[0])[0] == ['{']:
               time.sleep(60)
               csvfileRaw = ts.get_daily(symbol,outputsize = 'full')
               
               if (list(list(csvfileRaw)[0])[0]) == ['{']:
                   #check if the api is actually timed out and the symbol is not just defunct
                   if (list(list(cts.get_daily(old_symbol,outputsize = 'full'))[0])[0])  ['{']:
-                      logw("Not in market" + symbol),0)
+                      logw("Not in market" + symbol,0)
                       continue
 
                   print("Going into hibernation..."+symbol[0])
@@ -118,10 +116,13 @@ def getSymbols(someSymbols=None):
                       logw('Day Long Wait Error' + symbol[0],0)
                       continue
 
+       else: 
+           old_symbol = symbol
+
        csvfile = list(csvfileRaw)
        #convert the csv row into a list
           
-       print("Your SQL write statment is commented out!!!")      
+       print("Your SQL write statment is commented out!!! " +symbol[0])      
        try:
            for rows in csvfile:  
               if rows is not None:
