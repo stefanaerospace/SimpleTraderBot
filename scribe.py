@@ -85,14 +85,14 @@ def getSymbols(someSymbols=None):
   
     #all symbols that errored out are stored here
     errors = []
-    old_symbol = 'A variable to keep track of the old symbol to handle symbols no longer on the market' 
+    old_symbol = 'A variable to keep track of the last successfully queried symbol to handle symbols no longer on the market' 
 
     for symbol in symbols: 
        
-       #attempt to fetch the stock's information for the day--if not able to reach the API, try again, if daily limit reached, wait 24 hours
-      
-       csvfileRaw = ts.get_daily(symbol,outputsize = 'full')
-        
+        #attempt to fetch the stock's information for the day--if not able to reach the API, try again after a minute, if daily limit reached, wait 24 hours 
+
+       print("On symbol: "+symbol[0]) 
+       csvfileRaw = ts.get_daily(symbol,outputsize = 'full') 
        
        if list(list(csvfileRaw)[0])[0] == ['{']:
               time.sleep(60)
@@ -104,7 +104,6 @@ def getSymbols(someSymbols=None):
                       logw("Not in market" + symbol,0)
                       continue
 
-                  print("Going into hibernation..."+symbol[0])
                   logw("Going into hibernation..."+symbol[0],1)
                   
                   time.sleep(86400) 
@@ -112,17 +111,15 @@ def getSymbols(someSymbols=None):
                   
                   if (list(list(csvfileRaw)[0])[0]) == ['{']:
     
-                      print('Retrieval error on ' +symbol[0])
                       logw('Day Long Wait Error' + symbol[0],0)
                       continue
 
        else: 
-           old_symbol = symbol
+           old_symbol = symbol #stores last successful symbol
 
        csvfile = list(csvfileRaw)
        #convert the csv row into a list
           
-       print("Your SQL write statment is commented out!!! " +symbol[0])      
        try:
            for rows in csvfile:  
               if rows is not None:
@@ -136,14 +133,16 @@ def getSymbols(someSymbols=None):
                                cell[4] + ','+\
                                cell[5] + ');'
                                
-                      #print(statement)
-                      
-                      #sqlStatement(statement)
+                      sqlStatement(statement)
            #wirte success to log
            logw(symbol[0],1)
 
            
        except:
            #write failure to log
-           logw(symbol[0],0)
+           print('FAIL: ' + symbol[0])
+           logw('SQL Error' + symbol[0],0)
            continue
+
+print("HELLO YOU HAVE THIS SET TO AUTORUN AND GET ALL NASDAQ STOCKS!!!!")
+getSymbols()
