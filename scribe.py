@@ -1,6 +1,7 @@
 #This file is meant to take in data requests from a requests table in sqlite3
 #   So if there is any api retreval needing to be done, this is the script to come to.
 
+import os
 import csv
 import sqlite3
 import time
@@ -20,12 +21,12 @@ def logw(symbol, bitType):
             try:
 
                 if bitType == 1:
-                    logFile = open("/home/pi/Documents/SimpleTraderBot-master/logSuccess.txt","a")
+                    logFile = open(os.getcwd()+"/logSuccess.txt","a")
                     logFile.write(symbol+"\n")
                     logFile.close()
 
                 if bitType == 0:
-                    logError = open("/home/pi/Documents/SimpleTraderBot-master/errorLog.txt", "a")
+                    logError = open(os.getcwd()+"/errorLog.txt", "a")
                     logError.write(symbol+"\n")
                     logError.close()
 
@@ -41,7 +42,7 @@ def logw(symbol, bitType):
 
 #An SQL execution statement
 def sqlStatement(statement):
-    pathToDB =  '/home/pi/Documents/SimpleTraderBot-master/markets'
+    pathToDB =  os.getcwd()+'/markets'
     with contextlib.closing(sqlite3.connect(pathToDB,timeout=10)) as conn:
         with conn:
             with contextlib.closing(conn.cursor()) as cursor:
@@ -50,10 +51,10 @@ def sqlStatement(statement):
 
 #Takes in a list of stock tickers that need to be updated on an intraday basis, 
 #   if no list is provided, then it updates all stocks
-def getSymbols_(someSymbols=None):
+def getSymbols(someSymbols=None):
 
     #connect to the Alpha Vantage REST(-ish?) Api
-    key = open('/home/pi/Documents/SimpleTraderBot-master/key', 'r').read()
+    key = open(os.getcwd()+'/key', 'r').read()
     ts = TimeSeries(key,output_format='csv')
      
     ##retrieve the different tickers
@@ -68,7 +69,7 @@ def getSymbols_(someSymbols=None):
              
          for i in markets:
              #connect to the sqlite3 db
-             con = sqlite3.connect('/home/pi/Documents/SimpleTraderBot-master/markets',timeout=10)
+             con = sqlite3.connect(os.getcwd()+'/markets',timeout=10)
              cur = con.cursor()
                 
              #cur = conn.cursor()
@@ -87,44 +88,48 @@ def getSymbols_(someSymbols=None):
     
 
     for symbol in symbols: 
-       #attempt to fetch the stock's information for the day--if not able to reach the API, try again, if daily limit reached, wait 24 hours
-       try: 
-           time.sleep(20)
-           csvfileRaw = ts.get_daily(symbol,outputsize = 'full')
-
-       except:
-           try: 
-               time.sleep(20)
-               csvfileRaw = ts.get_daily(symbol,outputsize = 'full')
-           except:
-               print("Going into hibernation..."+symbol[0])
-               time.sleep(86400) 
-               try: 
-                   csvfileRaw = ts.get_daily(symbol,outputsize = 'full')
-               except:    
-                   print('Retrieval error on ' +symbol[0])
-                   logw(symbol[0],0)
-       csvfile = list(csvfileRaw)
        
+        #attempt to fetch the stock's information for the day--if not able to reach the API, try again, if daily limit reached, wait 24 hours
+       
+       csvfileRaw = ts.get_daily(symbol,outputsize = 'full')
+       
+       if (list(list(csvfileRaw)[0])[0]) == ['{']:
+              time.sleep(60)
+              csvfileRaw = ts.get_daily(symbol,outputsize = 'full')
+              
+              if (list(list(csvfileRaw)[0])[0]) == ['{']:
+                  print("Going into hibernation..."+symbol[0])
+                  logw("Going into hibernation..."+symbol[0],1)
+                  
+                  time.sleep(86400) 
+                  csvfileRaw = ts.get_daily(symbol,outputsize = 'full')
+                  
+                  if (list(list(csvfileRaw)[0])[0]) == ['{']:
+    
+                      print('Retrieval error on ' +symbol[0])
+                      logw('Day Long Wait Error' + symbol[0],0)
+                      continue
+
+       csvfile = list(csvfileRaw)
        #convert the csv row into a list
           
        try:
            for rows in csvfile:  
               if rows is not None:
                   row = list(rows) 
-
                   #start feeding the rows into the sql db
-                  for cell in row[1:-1]:
+                  for cell in row:
                       statement = 'insert into '+symbol[0]+' (timestamp,open,high,low,close,volume) values (\'' + cell[0] + '\' ,' +\
                                cell[1] + ','+\
                                cell[2] + ','+\
                                cell[3] + ','+\
                                cell[4] + ','+\
                                cell[5] + ');'
-                       
-                      sqlStatement(statement)
-                      print(statement)
-                      break 
+                               
+                      #print(statement)
+                      
+                      print("Your SQL write statment is commented out!!!")      
+                      #sqlStatement(statement)
            #wirte success to log
            logw(symbol[0],1)
 
@@ -133,4 +138,3 @@ def getSymbols_(someSymbols=None):
            #write failure to log
            logw(symbol[0],0)
            continue
-getSymbols_()
