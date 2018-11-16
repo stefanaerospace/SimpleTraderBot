@@ -12,33 +12,17 @@ from alpha_vantage.timeseries import TimeSeries
 #A log writting function
 def logw(symbol, bitType):
    
-    #This writes to a success or error log, the control flow around it allows 
-    #   for remote access to the same file without failing the script (just in case).
-    for i in range(0,100):
-        done = False
-        while True:
+   if bitType == 1:
+       logFile = open(os.getcwd()+"/logSuccess.txt","a")
+       logFile.write(symbol+"\n")
+       logFile.close()
 
-            try:
+   if bitType == 0:
+       logError = open(os.getcwd()+"/errorLog.txt", "a")
+       logError.write(symbol+"\n")
+       logError.close()
 
-                if bitType == 1:
-                    logFile = open(os.getcwd()+"/logSuccess.txt","a")
-                    logFile.write(symbol+"\n")
-                    logFile.close()
 
-                if bitType == 0:
-                    logError = open(os.getcwd()+"/errorLog.txt", "a")
-                    logError.write(symbol+"\n")
-                    logError.close()
-
-                    done = True
-            except:
-                sleep(90)
-                continue
-            break
-
-        if done ==True:
-            break
-    
 
 #An SQL execution statement
 def sqlStatement(statement):
@@ -53,6 +37,7 @@ def sqlStatement(statement):
 #   if no list is provided, then it updates all stocks
 def getSymbols(someSymbols=None):
 
+    os.chdir("/home/pi/Documents/SimpleTraderBot")
     #connect to the Alpha Vantage REST(-ish?) Api
     key = open(os.getcwd()+'/key', 'r').read()
     ts = TimeSeries(key,output_format='csv')
@@ -85,13 +70,12 @@ def getSymbols(someSymbols=None):
   
     #all symbols that errored out are stored here
     errors = []
-    old_symbol = 'A variable to keep track of the last successfully queried symbol to handle symbols no longer on the market' 
 
     for symbol in symbols: 
        
         #attempt to fetch the stock's information for the day--if not able to reach the API, try again after a minute, if daily limit reached, wait 24 hours 
 
-       print("On symbol: "+symbol[0]) 
+       #print("On symbol: "+symbol[0]) 
        csvfileRaw = ts.get_daily(symbol,outputsize = 'full') 
        
        if list(list(csvfileRaw)[0])[0] == ['{']:
@@ -114,9 +98,6 @@ def getSymbols(someSymbols=None):
                       logw('Day Long Wait Error' + symbol[0],0)
                       continue
 
-       else: 
-           old_symbol = symbol #stores last successful symbol
-
        csvfile = list(csvfileRaw)
        #convert the csv row into a list
           
@@ -133,16 +114,16 @@ def getSymbols(someSymbols=None):
                                cell[4] + ','+\
                                cell[5] + ');'
                                
-                      sqlStatement(statement)
-           #wirte success to log
-           logw(symbol[0],1)
+                      qlStatement(statement)
 
            
        except:
            #write failure to log
-           print('FAIL: ' + symbol[0])
            logw('SQL Error' + symbol[0],0)
            continue
 
-print("HELLO YOU HAVE THIS SET TO AUTORUN AND GET ALL NASDAQ STOCKS!!!!")
+       #write success to log
+       print("Success: "+symbol[0])
+       logw(symbol[0],1)
+
 getSymbols()
