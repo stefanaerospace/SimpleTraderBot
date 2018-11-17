@@ -69,7 +69,8 @@ def getSymbols(someSymbols=None):
         symbols = someSymbols
   
     #all symbols that errored out are stored here
-    errors = []
+    errors = [] 
+    symbol_last_successful='MSFT'#this is used to make sure that the ticker being used 
 
     for symbol in symbols: 
        
@@ -83,9 +84,10 @@ def getSymbols(someSymbols=None):
               csvfileRaw = ts.get_daily(symbol,outputsize = 'full')
               
               if (list(list(csvfileRaw)[0])[0]) == ['{']:
+                  
                   #check if the api is actually timed out and the symbol is not just defunct
-                  if (list(list(cts.get_daily(old_symbol,outputsize = 'full'))[0])[0])  ['{']:
-                      logw("Not in market" + symbol,0)
+                  if (list(list(ts.get_daily(symbol_last_successful,outputsize = 'full'))[0])[0]) != ['{']:
+                      logw("Not in market" + symbol[0],0)
                       continue
 
                   logw("Going into hibernation..."+symbol[0],1)
@@ -93,17 +95,20 @@ def getSymbols(someSymbols=None):
                   time.sleep(86400) 
                   csvfileRaw = ts.get_daily(symbol,outputsize = 'full')
                   
+                  #if for some reason no result is returned....
                   if (list(list(csvfileRaw)[0])[0]) == ['{']:
     
                       logw('Day Long Wait Error' + symbol[0],0)
                       continue
-
+    
+       symbol_last_successful = symbol[0]
+       #convert the csv row into a list    
        csvfile = list(csvfileRaw)
-       #convert the csv row into a list
-          
+       
        try:
            for rows in csvfile:  
               if rows is not None:
+                  
                   row = list(rows) 
                   #start feeding the rows into the sql db
                   for cell in row:
@@ -116,7 +121,6 @@ def getSymbols(someSymbols=None):
                                
                       qlStatement(statement)
 
-           
        except:
            #write failure to log
            logw('SQL Error' + symbol[0],0)
