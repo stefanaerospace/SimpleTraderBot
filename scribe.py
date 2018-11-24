@@ -75,8 +75,6 @@ def getSymbols(someSymbols=None):
     for symbol in symbols: 
        
         #attempt to fetch the stock's information for the day--if not able to reach the API, try again after a minute, if daily limit reached, wait 24 hours 
-
-       #print("On symbol: "+symbol[0]) 
        csvfileRaw = ts.get_daily(symbol,outputsize = 'full') 
        
        if list(list(csvfileRaw)[0])[0] == ['{']:
@@ -127,7 +125,6 @@ def getSymbols(someSymbols=None):
            continue
 
        #write success to log
-       print("Success: "+symbol[0])
        logw(symbol[0],1)
 
 getSymbols()
