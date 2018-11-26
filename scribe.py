@@ -10,14 +10,19 @@ import numpy
 from alpha_vantage.timeseries import TimeSeries
 
 #A log writting function
-def logw(symbol, bitType):
-   
-   if bitType == 1:
+def logw(symbol, logType):
+    
+   if logType == 2:
+       logFile = open(os.getcwd()+"/logSQLStatments.txt","a")
+       logFile.write(symbol+"\n")
+       logFile.close()
+
+   if logType == 1:
        logFile = open(os.getcwd()+"/logSuccess.txt","a")
        logFile.write(symbol+"\n")
        logFile.close()
 
-   if bitType == 0:
+   if logType == 0:
        logError = open(os.getcwd()+"/errorLog.txt", "a")
        logError.write(symbol+"\n")
        logError.close()
@@ -31,6 +36,8 @@ def sqlStatement(statement):
         with conn:
             with contextlib.closing(conn.cursor()) as cursor:
                 cursor.execute(statement)
+                cursor.close()
+            conn.commit()
 
 
 #Takes in a list of stock tickers that need to be updated on an intraday basis, 
@@ -50,7 +57,6 @@ def getSymbols(someSymbols=None):
     if someSymbols == None:
          #get the list of tickers from the database
          markets = ['NASDAQ']
-
              
          for i in markets:
              #connect to the sqlite3 db
@@ -73,58 +79,58 @@ def getSymbols(someSymbols=None):
     symbol_last_successful='MSFT'#this is used to make sure that the ticker being used 
 
     for symbol in symbols: 
-       
+
         #attempt to fetch the stock's information for the day--if not able to reach the API, try again after a minute, if daily limit reached, wait 24 hours 
-       csvfileRaw = ts.get_daily(symbol,outputsize = 'full') 
-       
-       if list(list(csvfileRaw)[0])[0] == ['{']:
-              time.sleep(60)
-              csvfileRaw = ts.get_daily(symbol,outputsize = 'full')
-              
-              if (list(list(csvfileRaw)[0])[0]) == ['{']:
-                  
-                  #check if the api is actually timed out and the symbol is not just defunct
-                  if (list(list(ts.get_daily(symbol_last_successful,outputsize = 'full'))[0])[0]) != ['{']:
-                      logw("Not in market" + symbol[0],0)
-                      continue
+        csvfileRaw = ts.get_daily(symbol,outputsize = 'full')
+        csvfile = list(list(csvfileRaw)[0])
 
-                  logw("Going into hibernation..."+symbol[0],1)
-                  
-                  time.sleep(86400) 
-                  csvfileRaw = ts.get_daily(symbol,outputsize = 'full')
-                  
-                  #if for some reason no result is returned....
-                  if (list(list(csvfileRaw)[0])[0]) == ['{']:
+        if csvfile[0] == ['{']:
+               print("waiting") 
+               time.sleep(60)
+               csvfileRaw = ts.get_daily(symbol,outputsize = 'full')
+               csvfile = list(csvfileRaw)[0]
+               csvfile = list(csvfile)
+
+               if csvfile[0] == ['{']:
+                   
+                   #check if the api is actually timed out and the symbol is not just defunct
+                   if (list(list(ts.get_daily(symbol_last_successful,outputsize = 'full'))[0])[0]) != ['{']:
+                       logw("Not in market" + symbol[0],0)
+                       continue
+        
+                   logw("Going into hibernation..."+symbol[0],1) 
+                   time.sleep(86400) 
+
+                   csvfileRaw = ts.get_daily(symbol,outputsize = 'full')
+                   csvfile    = list(list(csvfileRaw)[0])
+
+                   #if for some reason no result is returned....
+                   if csvfile[0]  == ['{']:
     
-                      logw('Day Long Wait Error' + symbol[0],0)
-                      continue
+                       logw('Day Long Wait Error' + symbol[0],0)
+                       continue
     
-       symbol_last_successful = symbol[0]
-       #convert the csv row into a list    
-       csvfile = list(csvfileRaw)
-       
-       try:
-           for rows in csvfile:  
-              if rows is not None:
-                  
-                  row = list(rows) 
-                  #start feeding the rows into the sql db
-                  for cell in row:
-                      statement = 'insert into '+symbol[0]+' (timestamp,open,high,low,close,volume) values (\'' + cell[0] + '\' ,' +\
-                               cell[1] + ','+\
-                               cell[2] + ','+\
-                               cell[3] + ','+\
-                               cell[4] + ','+\
-                               cell[5] + ');'
-                               
-                      qlStatement(statement)
-
-       except:
-           #write failure to log
-           logw('SQL Error' + symbol[0],0)
-           continue
-
-       #write success to log
-       logw(symbol[0],1)
-
+        symbol_last_successful = symbol[0]
+        
+        #In case you need a refresher in how Alpha Vantage sends csv objects 
+        #print("BROKEN FOR EMERGENCY!")
+        #csvfileRaw = ts.get_daily(symbol,outputsize = 'full')
+        #nonNullSection = list(csvfileRaw)[0]
+        #for i in nonNullSection:
+        #    print(i)
+        #break
+        
+        #convert the csv row into a list, reverse list and take off csv header text
+        for cell in csvfile[:0:-1]: #header is stored at end + 1, we don't want the header
+            statement = 'insert into '+symbol[0]+' (timestamp,open,high,low,close,volume) values (\'' + cell[0] + '\' ,' +\
+                     cell[1] + ','+\
+                     cell[2] + ','+\
+                     cell[3] + ','+\
+                     cell[4] + ','+\
+                     cell[5] + ');'
+            logw(statement,2)                               
+            sqlStatement(statement)
+        #write success to log
+        logw(symbol[0],1)
+        print(symbol[0]) 
 getSymbols()
