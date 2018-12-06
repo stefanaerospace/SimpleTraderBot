@@ -44,7 +44,7 @@ def sqlStatement(statement):
 #   if no list is provided, then it updates all stocks
 def getSymbols(someSymbols=None):
 
-    os.chdir("/home/pi/Documents/SimpleTraderBot")
+    os.chdir("/home/stefan/SimpleTraderBot")
     #connect to the Alpha Vantage REST(-ish?) Api
     key = open(os.getcwd()+'/key', 'r').read()
     ts = TimeSeries(key,output_format='csv')
@@ -73,9 +73,7 @@ def getSymbols(someSymbols=None):
     
     else:
         symbols = someSymbols
-  
     #all symbols that errored out are stored here
-    errors = [] 
     symbol_last_successful='MSFT'#this is used to make sure that the ticker being used 
 
     for symbol in symbols: 
@@ -114,12 +112,14 @@ def getSymbols(someSymbols=None):
         
         #In case you need a refresher in how Alpha Vantage sends csv objects 
         #print("BROKEN FOR EMERGENCY!")
-        #csvfileRaw = ts.get_daily(symbol,outputsize = 'full')
-        #nonNullSection = list(csvfileRaw)[0]
-        #for i in nonNullSection:
-        #    print(i)
+        #csvfileRaw_temp = ts.get_daily(symbol,outputsize = 'full')
+        #nonNullSection = list(csvfileRaw_temp)[0]
+        #count = list(nonNullSection) 
+        #print('Counter of symbol: ' +str(len(count)))
+        ##for i in nonNullSection:
+        #    #print(i)
         #break
-        
+
         #convert the csv row into a list, reverse list and take off csv header text
         for cell in csvfile[:0:-1]: #header is stored at end + 1, we don't want the header
             statement = 'insert into '+symbol[0]+' (timestamp,open,high,low,close,volume) values (\'' + cell[0] + '\' ,' +\
