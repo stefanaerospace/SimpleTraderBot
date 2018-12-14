@@ -44,7 +44,7 @@ def sqlStatement(statement):
 #   if no list is provided, then it updates all stocks
 def getSymbols(someSymbols=None):
 
-    os.chdir("/home/stefan/SimpleTraderBot")
+    os.chdir("/home/pi/Documents/SimpleTraderBot")
     #connect to the Alpha Vantage REST(-ish?) Api
     key = open(os.getcwd()+'/key', 'r').read()
     ts = TimeSeries(key,output_format='csv')
