@@ -36,7 +36,7 @@ def sqlStatement(statement):
         with conn:
             with contextlib.closing(conn.cursor()) as cursor:
                 cursor.execute(statement)
-                cursor.close()
+                cursor.close() #TODO this should not be needed due to contextlib.closing
             conn.commit()
 
 
@@ -128,7 +128,7 @@ def getSymbols(someSymbols=None):
                      cell[3] + ','+\
                      cell[4] + ','+\
                      cell[5] + ');'
-            logw(statement,2)                               
+            logw(statement,2)   # TODO this will probably cause the .txt module to crash                            
             sqlStatement(statement)
         #write success to log
         logw(symbol[0],1)
