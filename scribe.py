@@ -30,7 +30,7 @@ def sqlStatement(csvfile,symbol):
     with contextlib.closing(sqlite3.connect(pathToDB,timeout=10)) as conn:
         with contextlib.closing(conn.cursor()) as cursor:
             for cell in csvfile[:0:-1]: #header is stored at end + 1, we don't want the header
-                statement = 'insert into '+symbol[0]+' (timestamp,open,high,low,close,volume) values (\'' + 
+                statement = 'insert into '+symbol[0]+' (timestamp,open,high,low,close,volume) values (\'' + \
                 cell[0] + '\' ,' +\
                 cell[1] + ','+\
                 cell[2] + ','+\
@@ -45,8 +45,8 @@ def sqlStatement(csvfile,symbol):
 #Takes in a list of stock tickers that need to be updated on an intraday basis, 
 #   if no list is provided, then it updates all stocks
 def getSymbols(someSymbols=None):
-
-    os.chdir("/home/pi/Documents/SimpleTraderBot")
+    
+    os.getcwd()
     #connect to the Alpha Vantage Api
     key = open(os.getcwd()+'/key', 'r').read()
     ts = TimeSeries(key,output_format='csv')
