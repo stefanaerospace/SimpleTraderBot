@@ -30,7 +30,8 @@ def sqlStatement(csvfile,symbol):
     with contextlib.closing(sqlite3.connect(pathToDB,timeout=10)) as conn:
         with contextlib.closing(conn.cursor()) as cursor:
             for cell in csvfile[:0:-1]: #header is stored at end + 1, we don't want the header
-                statement = 'insert into '+symbol[0]+' (timestamp,open,high,low,close,volume) values (\'' + cell[0] + '\' ,' +\
+                statement = 'insert into '+symbol[0]+' (timestamp,open,high,low,close,volume) values (\'' + 
+                cell[0] + '\' ,' +\
                 cell[1] + ','+\
                 cell[2] + ','+\
                 cell[3] + ','+\
