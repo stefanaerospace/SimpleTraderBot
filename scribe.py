@@ -28,18 +28,17 @@ def sqlStatement(csvfile,symbol):
 
     pathToDB =  os.getcwd()+'/markets'
     with contextlib.closing(sqlite3.connect(pathToDB,timeout=10)) as conn:
-        with conn:
-            with contextlib.closing(conn.cursor()) as cursor:
-                for cell in csvfile[:0:-1]: #header is stored at end + 1, we don't want the header
-                    statement = 'insert into '+symbol[0]+' (timestamp,open,high,low,close,volume) values (\'' + cell[0] + '\' ,' +\
-                    cell[1] + ','+\
-                    cell[2] + ','+\
-                    cell[3] + ','+\
-                    cell[4] + ','+\
-                    cell[5] + ');'
-                cursor.execute(statement)
-                cursor.close()
-                conn.commit()
+        with contextlib.closing(conn.cursor()) as cursor:
+            for cell in csvfile[:0:-1]: #header is stored at end + 1, we don't want the header
+                statement = 'insert into '+symbol[0]+' (timestamp,open,high,low,close,volume) values (\'' + cell[0] + '\' ,' +\
+                cell[1] + ','+\
+                cell[2] + ','+\
+                cell[3] + ','+\
+                cell[4] + ','+\
+                cell[5] + ');'
+            cursor.execute(statement)
+            cursor.close()
+            conn.commit()
 
 
 #Takes in a list of stock tickers that need to be updated on an intraday basis, 
