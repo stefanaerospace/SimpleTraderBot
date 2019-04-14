@@ -29,7 +29,7 @@ def sqlStatement(csvfile,symbol):
     pathToDB =  os.getcwd()+'/markets'
     with contextlib.closing(sqlite3.connect(pathToDB,timeout=10)) as conn:
         with contextlib.closing(conn.cursor()) as cursor:
-            for cell in csvfile[:0:-1]: #header is stored at end + 1, we don't want the header
+            for cell in csvfile[-1:0:-1]: #header is stored at end + 1, we don't want the header
                 statement = 'insert into '+symbol[0]+' (timestamp,open,high,low,close,volume) values (\'' + \
                 cell[0] + '\' ,' +\
                 cell[1] + ','+\
