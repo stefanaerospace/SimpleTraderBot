@@ -7,6 +7,7 @@ import sqlite3
 import time
 import contextlib
 import numpy
+from datetime import datetime as dt
 from alpha_vantage.timeseries import TimeSeries
 
 #A log writting function
@@ -25,24 +26,25 @@ def logw(symbol, logType):
 
 
 def sqlStatement(csvfile,symbol):
+    # Inserts data into the database
 
     pathToDB =  os.getcwd()+'/markets'
 
     with contextlib.closing(sqlite3.connect(pathToDB,timeout=10)) as conn:
 
         with contextlib.closing(conn.cursor()) as cursor:
+            
+            date = cursor.execute('select timestamp from ' + symbol[0] + ' order by rowid desc limit 1').fetchone()
 
-            for cell in csvfile[::-1]: #header is stored at end + 1, we don't want the header, causes a type error
+            for cell in csvfile[::-1]:#have latest date stored last 
 
-                statement = 'insert into '+symbol[0]+' (timestamp,open,high,low,close,volume) values (\'' + \
-                cell[0] + '\' ,' +\
-                cell[1] + ','+\
-                cell[2] + ','+\
-                cell[3] + ','+\
-                cell[4] + ','+\
-                cell[5] + ');'
-                
-                cursor.execute(statement)
+                #reformat timestamp to a comparable
+                request_date = cell[0].split('-')
+                request_date = request_date[0] + '/' + request_date[1] + '/' + request_date[2]
+                cell[0] = request_date 
+
+                if(date == None or cell[0]>date[0]): 
+                    cursor.execute('insert into ' + symbol[0] + ' (timestamp,open,high,low,close,volume) values (?,?,?,?,?,?)',cell)
             
             cursor.close()
             conn.commit()
@@ -53,6 +55,7 @@ def sqlStatement(csvfile,symbol):
 def getSymbols(someSymbols=None):
     
     os.getcwd()
+
     #connect to the Alpha Vantage Api
     key = open(os.getcwd()+'/key', 'r').read()
     ts = TimeSeries(key,output_format='csv')
@@ -81,6 +84,7 @@ def getSymbols(someSymbols=None):
     
     else:
         symbols = someSymbols
+
     #all symbols that errored out are stored here
     symbol_last_successful='MSFT'#this is used to make sure that the ticker being used 
 
@@ -103,11 +107,11 @@ def getSymbols(someSymbols=None):
 
                    #check if the api is actually timed out and the symbol is not just defunct
                    if (list(list(ts.get_daily(symbol_last_successful,outputsize = 'full'))[0])[0]) != ['{']:
-                       logw("Not in market" + symbol[0],0)
+                       logw("Not in market " + symbol[0],0)
                        continue
         
                    logw("Going into hibernation..."+symbol[0],1) 
-                   logw("    day long wait",1)
+                   logw("    day long wait ",1)
                    time.sleep(86400) 
 
                    csvfileRaw = ts.get_daily(symbol,outputsize = 'full')
@@ -120,8 +124,6 @@ def getSymbols(someSymbols=None):
                        continue
     
         symbol_last_successful = symbol[0]
-        print(symbol)
-        #logw(symbol[0],1)
         
         #In case you need a refresher in how Alpha Vantage sends csv objects 
         #print("BROKEN FOR EMERGENCY!")
@@ -136,6 +138,6 @@ def getSymbols(someSymbols=None):
         #convert the csv row into a list, reverse list and take off csv header text
     
         sqlStatement(csvfile[1::],symbol)
+        
         #write success to log
         logw(symbol[0],1) 
-getSymbols()

@@ -1,0 +1,3 @@
+import scribe
+
+scribe.getSymbols()
