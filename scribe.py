@@ -27,9 +27,13 @@ def logw(symbol, logType):
 def sqlStatement(csvfile,symbol):
 
     pathToDB =  os.getcwd()+'/markets'
+
     with contextlib.closing(sqlite3.connect(pathToDB,timeout=10)) as conn:
+
         with contextlib.closing(conn.cursor()) as cursor:
-            for cell in csvfile[-1:0:-1]: #header is stored at end + 1, we don't want the header
+
+            for cell in csvfile[::-1]: #header is stored at end + 1, we don't want the header, causes a type error
+
                 statement = 'insert into '+symbol[0]+' (timestamp,open,high,low,close,volume) values (\'' + \
                 cell[0] + '\' ,' +\
                 cell[1] + ','+\
@@ -37,7 +41,9 @@ def sqlStatement(csvfile,symbol):
                 cell[3] + ','+\
                 cell[4] + ','+\
                 cell[5] + ');'
-            cursor.execute(statement)
+                
+                cursor.execute(statement)
+            
             cursor.close()
             conn.commit()
 
@@ -94,6 +100,7 @@ def getSymbols(someSymbols=None):
 
                if csvfile[0] == ['{']:
                    time.sleep(60) 
+
                    #check if the api is actually timed out and the symbol is not just defunct
                    if (list(list(ts.get_daily(symbol_last_successful,outputsize = 'full'))[0])[0]) != ['{']:
                        logw("Not in market" + symbol[0],0)
@@ -128,9 +135,7 @@ def getSymbols(someSymbols=None):
 
         #convert the csv row into a list, reverse list and take off csv header text
     
-        logw("    Successful pull down, starting write",1)
-        sqlStatement(csvfile,symbol)
+        sqlStatement(csvfile[1::],symbol)
         #write success to log
         logw(symbol[0],1) 
-        logw('    write done, moving on to next symbol',1)
 getSymbols()
