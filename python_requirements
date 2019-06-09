@@ -1,0 +1,9 @@
+#Python 
+pip install numpy
+pip install contextlib
+pip install alpha_vantage
+pip install datetime
+pip install time
+pip install sqlite3
+pip install csv
+pip install os 

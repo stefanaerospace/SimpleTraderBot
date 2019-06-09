@@ -1,0 +1,6 @@
+#Source this file when starting a fresh AMI
+pip install virtualenv
+virtualenv venv
+virtualenv -p /usr/bin/python3.6 venv
+source venv/bin/activate
+source python_requirements
